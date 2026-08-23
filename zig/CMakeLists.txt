@@ -197,6 +197,15 @@ set(ZIG_CPP_SOURCES
     # These are planned to stay even when we are self-hosted.
     src/zig_llvm.cpp
     src/zig_llvm-ar.cpp
+    src/zig_llvm-nm.cpp
+    src/llvm-objdump/llvm-objdump.cpp
+    src/llvm-objdump/COFFDump.cpp
+    src/llvm-objdump/ELFDump.cpp
+    src/llvm-objdump/MachODump.cpp
+    src/llvm-objdump/OffloadDump.cpp
+    src/llvm-objdump/SourcePrinter.cpp
+    src/llvm-objdump/WasmDump.cpp
+    src/llvm-objdump/XCOFFDump.cpp
     src/zig_clang_driver.cpp
     src/zig_clang_cc1_main.cpp
     src/zig_clang_cc1as_main.cpp

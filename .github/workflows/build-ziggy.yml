@@ -20,6 +20,19 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq ninja-build python3
 
+      # The LLVM+Clang+LLD build is the expensive part (~2 hours) and never
+      # changes between runs that only touch zig/ source — cache it so a fix
+      # to our zig-specific code doesn't force a full LLVM rebuild every time.
+      # Keyed on the llvm/clang/lld/cmake dirs' content, which come from the
+      # zig-bootstrap pin and don't change unless we intentionally update it.
+      - name: Cache LLVM/Clang/LLD build+install
+        uses: actions/cache@v4
+        with:
+          path: |
+            out/build-llvm-host
+            out/host
+          key: llvm-host-${{ hashFiles('llvm/**', 'clang/**', 'lld/**', 'cmake/**', 'zlib/**', 'zstd/**') }}
+
       - name: Build ziggy (full LLVM+Clang+LLD+Zig bootstrap)
         env:
           CMAKE_GENERATOR: Ninja
