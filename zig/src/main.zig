@@ -275,6 +275,12 @@ fn mainArgs(gpa: Allocator, arena: Allocator, args: []const []const u8) !void {
     {
         dev.check(.ar_command);
         return process.exit(try llvmArMain(arena, args));
+    } else if (mem.eql(u8, cmd, "nm") or mem.eql(u8, cmd, "llvm-nm")) {
+        dev.check(.ar_command);
+        return process.exit(try llvmNmMain(arena, args));
+    } else if (mem.eql(u8, cmd, "objdump") or mem.eql(u8, cmd, "llvm-objdump")) {
+        dev.check(.ar_command);
+        return process.exit(try llvmObjdumpMain(arena, args));
     } else if (mem.eql(u8, cmd, "build")) {
         dev.check(.build_command);
         return cmdBuild(gpa, arena, io, cmd_args);
@@ -5664,6 +5670,8 @@ extern fn ZigClangIsLLVMUsingSeparateLibcxx() bool;
 
 extern "c" fn ZigClang_main(argc: c_int, argv: [*:null]?[*:0]u8) c_int;
 extern "c" fn ZigLlvmAr_main(argc: c_int, argv: [*:null]?[*:0]u8) c_int;
+extern "c" fn ZigLlvmNm_main(argc: c_int, argv: [*:null]?[*:0]u8) c_int;
+extern "c" fn ZigLlvmObjdump_main(argc: c_int, argv: [*:null]?[*:0]u8) c_int;
 
 fn argsCopyZ(alloc: Allocator, args: []const []const u8) ![:null]?[*:0]u8 {
     var argv = try alloc.allocSentinel(?[*:0]u8, args.len, null);
@@ -5699,6 +5707,36 @@ pub fn llvmArMain(alloc: Allocator, args: []const []const u8) error{OutOfMemory}
     // We intentionally shave off the zig binary at args[0].
     const argv = try argsCopyZ(arena, args[1..]);
     const exit_code = ZigLlvmAr_main(@as(c_int, @intCast(argv.len)), argv.ptr);
+    return @as(u8, @bitCast(@as(i8, @truncate(exit_code))));
+}
+
+pub fn llvmNmMain(alloc: Allocator, args: []const []const u8) error{OutOfMemory}!u8 {
+    if (!build_options.have_llvm)
+        fatal("`zig nm` unavailable: compiler built without LLVM extensions", .{});
+
+    var arena_instance = std.heap.ArenaAllocator.init(alloc);
+    defer arena_instance.deinit();
+    const arena = arena_instance.allocator();
+
+    // Convert the args to the format llvm-nm expects.
+    // We intentionally shave off the zig binary at args[0].
+    const argv = try argsCopyZ(arena, args[1..]);
+    const exit_code = ZigLlvmNm_main(@as(c_int, @intCast(argv.len)), argv.ptr);
+    return @as(u8, @bitCast(@as(i8, @truncate(exit_code))));
+}
+
+pub fn llvmObjdumpMain(alloc: Allocator, args: []const []const u8) error{OutOfMemory}!u8 {
+    if (!build_options.have_llvm)
+        fatal("`zig objdump` unavailable: compiler built without LLVM extensions", .{});
+
+    var arena_instance = std.heap.ArenaAllocator.init(alloc);
+    defer arena_instance.deinit();
+    const arena = arena_instance.allocator();
+
+    // Convert the args to the format llvm-objdump expects.
+    // We intentionally shave off the zig binary at args[0].
+    const argv = try argsCopyZ(arena, args[1..]);
+    const exit_code = ZigLlvmObjdump_main(@as(c_int, @intCast(argv.len)), argv.ptr);
     return @as(u8, @bitCast(@as(i8, @truncate(exit_code))));
 }
 
