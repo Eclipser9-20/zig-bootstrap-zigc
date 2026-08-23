@@ -3753,20 +3753,20 @@ int llvm_objdump_main(int argc, char **argv, const llvm::ToolContext &) {
     return 0;
   }
 
-  // Initialize debuginfod.
-  const bool ShouldUseDebuginfodByDefault =
-      InputArgs.hasArg(OBJDUMP_build_id) || canUseDebuginfod();
+  // Debuginfod (remote debug-info-fetching over HTTP) is intentionally not
+  // wired up here: it needs LLVM built with curl/httplib support, which
+  // isn't reliably available across every build environment this vendors
+  // into. --debug-file-directory (local search paths) still works via the
+  // plain BuildIDFetcher below; only the network-fetch path is disabled.
   std::vector<std::string> DebugFileDirectories =
       InputArgs.getAllArgValues(OBJDUMP_debug_file_directory);
-  if (InputArgs.hasFlag(OBJDUMP_debuginfod, OBJDUMP_no_debuginfod,
-                        ShouldUseDebuginfodByDefault)) {
-    HTTPClient::initialize();
-    BIDFetcher =
-        std::make_unique<DebuginfodFetcher>(std::move(DebugFileDirectories));
-  } else {
-    BIDFetcher =
-        std::make_unique<BuildIDFetcher>(std::move(DebugFileDirectories));
+  if (InputArgs.hasArg(OBJDUMP_debuginfod)) {
+    WithColor::warning(errs(), ToolName)
+        << "this build was compiled without debuginfod support; "
+           "ignoring --debuginfod\n";
   }
+  BIDFetcher =
+      std::make_unique<BuildIDFetcher>(std::move(DebugFileDirectories));
 
   if (Is("otool"))
     parseOtoolOptions(InputArgs);
