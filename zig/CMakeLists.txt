@@ -724,7 +724,11 @@ target_include_directories(zigcpp PUBLIC
     # — it's considered purely internal. Our vendored llvm-objdump sources
     # include it directly, so point at the LLVM build tree's generated
     # headers explicitly rather than relying on LLVM_INCLUDE_DIRS.
-    "${CMAKE_CURRENT_SOURCE_DIR}/../out/build-llvm-host/include"
+    # CMAKE_INSTALL_PREFIX here is "<out-dir>/host" (e.g. out/host on
+    # POSIX or out-win/host on Windows — the output dir name varies by
+    # platform, so derive it from the prefix instead of hardcoding it);
+    # build-llvm-host is always its sibling directory.
+    "${CMAKE_INSTALL_PREFIX}/../build-llvm-host/include"
 )
 target_link_libraries(zigcpp PUBLIC
     ${CLANG_LIBRARIES}
