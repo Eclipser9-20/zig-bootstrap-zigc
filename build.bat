@@ -267,7 +267,8 @@ cd "%ROOTDIR%\zig"
   -Dstrip ^
   -Dtarget="%TARGET%" ^
   -Dcpu="%MCPU%" ^
-  -Dversion-string="%ZIG_VERSION%"
+  -Dversion-string="%ZIG_VERSION%" ^
+  -Dno-langref
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 
 popd
