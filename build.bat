@@ -120,6 +120,16 @@ set ZIG=%ROOTDIR%%OUTDIR%\host\bin\zig.exe
 set "ZIG=%ZIG:\=/%"
 set "ZIG_LIB_DIR=%ROOTDIR%/zig/lib"
 
+rem Pre-warm zig's global cache directory with a single serial invocation
+rem before the parallel cross-compile stages below launch many concurrent
+rem "%ZIG% cc"/"%ZIG% c++" processes as the C/C++ compiler for CMake. Zig's
+rem global cache has a first-touch race when many processes try to
+rem initialize it simultaneously (observed as a generic "error: Unexpected"
+rem from a handful of the first files compiled under high parallelism) —
+rem creating it once, serially, up front avoids that race entirely so full
+rem CPU parallelism can be used safely for everything after this point.
+%ZIG% version >nul
+
 rem CMP0091=NEW is required in order for the CMAKE_MSVC_RUNTIME_LIBRARY value to be respected,
 rem which we need to be set to MultiThreaded when building msvc ABI targets
 

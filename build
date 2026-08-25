@@ -70,6 +70,16 @@ cmake --build . --target install
 # Now we have Zig as a cross compiler.
 ZIG="$ROOTDIR/out/host/bin/zig"
 
+# Pre-warm zig's global cache directory with a single serial invocation
+# before the parallel cross-compile stages below launch many concurrent
+# "$ZIG cc"/"$ZIG c++" processes as the C/C++ compiler for CMake. Zig's
+# global cache has a first-touch race when many processes try to
+# initialize it simultaneously (observed as a generic "error: Unexpected"
+# from a handful of the first files compiled under high parallelism) —
+# creating it once, serially, up front avoids that race entirely so full
+# CPU parallelism can be used safely for everything after this point.
+"$ZIG" version > /dev/null
+
 # First cross compile zlib for the target, as we need the LLVM linked into
 # the final zig binary to have zlib support enabled.
 mkdir -p "$ROOTDIR/out/build-zlib-$TARGET-$MCPU"
