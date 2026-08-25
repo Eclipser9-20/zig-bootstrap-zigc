@@ -275,12 +275,19 @@ fn mainArgs(gpa: Allocator, arena: Allocator, args: []const []const u8) !void {
     {
         dev.check(.ar_command);
         return process.exit(try llvmArMain(arena, args));
-    } else if (mem.eql(u8, cmd, "nm") or mem.eql(u8, cmd, "llvm-nm")) {
+    } else if (mem.eql(u8, cmd, "llvm-tools")) {
         dev.check(.ar_command);
-        return process.exit(try llvmNmMain(arena, args));
-    } else if (mem.eql(u8, cmd, "objdump") or mem.eql(u8, cmd, "llvm-objdump")) {
-        dev.check(.ar_command);
-        return process.exit(try llvmObjdumpMain(arena, args));
+        if (args.len < 3) {
+            fatal("expected sub-command after 'llvm-tools', available: nm, objdump", .{});
+        }
+        const tool = args[2];
+        if (mem.eql(u8, tool, "nm")) {
+            return process.exit(try llvmNmMain(arena, args[1..]));
+        } else if (mem.eql(u8, tool, "objdump")) {
+            return process.exit(try llvmObjdumpMain(arena, args[1..]));
+        } else {
+            fatal("unknown llvm-tools subcommand '{s}', available: nm, objdump", .{tool});
+        }
     } else if (mem.eql(u8, cmd, "build")) {
         dev.check(.build_command);
         return cmdBuild(gpa, arena, io, cmd_args);
